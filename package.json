@@ -1,0 +1,9 @@
+{
+  "name": "root-file-editor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Explorador y editor de archivos de texto limitado a una carpeta raíz",
+  "type": "module",
+  "scripts": { "start": "node server.js", "hash-password": "node server.js --hash-password" },
+  "engines": { "node": ">=18" }
+}
