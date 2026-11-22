@@ -1,32 +1,96 @@
-# Root File Editor
+# Boveda
 
-Pequeña web app para explorar y editar archivos de texto dentro de una carpeta raíz. No tiene usuarios ni autenticación propia; está pensada para publicarse detrás de la protección HTTP del VPS.
+Web app para explorar, editar y administrar archivos dentro de una carpeta raíz. Incluye login, pestañas, edición de texto, vista previa de imágenes/PDF/audio/video, drag & drop, subida, descarga, creación, renombrado y eliminación.
 
-## Uso local
+## Configuración
 
-Requiere Node.js 18 o superior. Copiá `.env.example` como `.env`, generá el hash de contraseña y completá sus variables:
-
-```bash
-npm start
-```
+Requiere Node.js 18 o superior. Copiá el ejemplo y generá el hash de la contraseña:
 
 ```bash
 cp .env.example .env
 npm run hash-password -- "tu contraseña"
 ```
 
-Pegá el resultado en `PASSWORD` dentro de `.env`. La aplicación incluye login, sesiones de 8 horas, subida, descarga, creación, renombrado y eliminación de archivos/carpetas.
+Pegá el resultado en `PASSWORD`. Ejemplo de `.env`:
 
-Abrí `http://127.0.0.1:3000`. Por defecto, la raíz editable es la carpeta desde la que se ejecuta el servidor. Para elegir otra carpeta, sin salir del proyecto de la aplicación:
-
-```bash
-EDITOR_ROOT=/ruta/al/proyecto PORT=3000 npm start
+```env
+EDITOR_ROOT=/ruta/al/proyecto/files
+USER=admin
+PASSWORD=scrypt$...
+HOST=127.0.0.1
+PORT=3000
+FAVICON=/img/favicon.png
+LOGO=/img/logo.png
 ```
 
-Variables disponibles: `EDITOR_ROOT`, `PORT` y `HOST` (por defecto `127.0.0.1`).
+`FAVICON` y `LOGO` también aceptan URLs externas:
 
-## VPS detrás de Nginx
+```env
+FAVICON=https://cdn.ejemplo.com/favicon.png
+LOGO=https://cdn.ejemplo.com/logo.png
+```
 
-Mantené `HOST=127.0.0.1` y configurá el subdominio para hacer proxy a `127.0.0.1:3000`. Protegé el subdominio con tu autenticación HTTP antes de exponerlo. Conviene ejecutarlo con systemd y usar un usuario con permisos únicamente sobre el proyecto que querés editar.
+Las URLs deben ser accesibles públicamente. Si la aplicación usa HTTPS, conviene usar también URLs `https://`.
 
-La API valida todas las rutas y rechaza intentos de salir de `EDITOR_ROOT`. Se excluyen `.git` y `node_modules` del árbol visual.
+## Ejecución local
+
+```bash
+npm start
+```
+
+Abrí `http://127.0.0.1:3000` o el puerto definido en `.env`.
+
+## Ejecución con PM2
+
+Dentro de un `ecosystem.config.js` existente:
+
+```js
+{
+  name: "boveda",
+  script: "./server.js",
+  cwd: "/ruta/al/proyecto/boveda",
+  interpreter: "node",
+  instances: 1,
+  exec_mode: "fork",
+  autorestart: true,
+  watch: false,
+  max_memory_restart: "300M",
+  env: { NODE_ENV: "production" }
+}
+```
+
+```bash
+pm2 start ecosystem.config.js
+pm2 save
+```
+
+Si Boveda ya existe en PM2:
+
+```bash
+pm2 restart boveda --update-env
+```
+
+## Nginx y subdominio
+
+Mantené `HOST=127.0.0.1` y configurá Nginx para hacer proxy al puerto de `.env`:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Protegé el subdominio con autenticación HTTP en Nginx antes de publicarlo.
+
+## Seguridad y límites
+
+- Todas las rutas se validan contra `EDITOR_ROOT`.
+- No se permite salir de la carpeta raíz.
+- `.git` y `node_modules` no se muestran en el árbol.
+- `PASSWORD` debe contener un hash `scrypt`, nunca una contraseña en texto plano.
+- Para producción, usá HTTPS y permisos restringidos para el usuario que ejecuta PM2.

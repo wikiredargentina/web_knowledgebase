@@ -12,6 +12,8 @@ if (process.argv[2] === '--hash-password') { const password=process.argv[3]; if(
 const ROOT = path.resolve(env.EDITOR_ROOT || process.env.EDITOR_ROOT || process.cwd());
 const PORT = Number(process.env.PORT || env.PORT || 3000);
 const HOST = process.env.HOST || env.HOST || '127.0.0.1';
+const FAVICON_PATH = env.FAVICON || '/img/favicon.png';
+const LOGO_PATH = env.LOGO || '/img/logo.png';
 const LOGIN_USER = env.USER || '';
 const PASSWORD_HASH = env.PASSWORD || '';
 const sessions = new Map();
@@ -50,7 +52,7 @@ async function serveStatic(req, res) {
   const base = file.startsWith('/img/') ? path.dirname(PUBLIC) : PUBLIC;
   const target = path.resolve(base, '.' + decodeURIComponent(file.split('?')[0]));
   if (!target.startsWith(base + path.sep)) return json(res, 403, {error:'Acceso denegado'});
-  try { const data = await fs.readFile(target); res.writeHead(200, {'Content-Type': contentType(target)}); res.end(data); }
+  try { let data = await fs.readFile(target); if (target === path.join(PUBLIC,'index.html') || target === path.join(PUBLIC,'app.js')) data = data.toString().replaceAll('/img/favicon.png', FAVICON_PATH).replaceAll('/img/logo.png', LOGO_PATH); res.writeHead(200, {'Content-Type': contentType(target)}); res.end(data); }
   catch { json(res, 404, {error:'No encontrado'}); }
 }
 const server = http.createServer(async (req,res) => {
