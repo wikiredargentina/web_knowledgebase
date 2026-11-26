@@ -21,6 +21,7 @@ HOST=127.0.0.1
 PORT=3000
 FAVICON=/img/favicon.png
 LOGO=/img/logo.png
+APP_TITLE=Boveda
 ```
 
 `FAVICON` y `LOGO` también aceptan URLs externas:
@@ -31,6 +32,8 @@ LOGO=https://cdn.ejemplo.com/logo.png
 ```
 
 Las URLs deben ser accesibles públicamente. Si la aplicación usa HTTPS, conviene usar también URLs `https://`.
+
+`APP_TITLE` define el nombre que aparece en la pestaña del navegador.
 
 ## Ejecución local
 
